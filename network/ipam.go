@@ -2,6 +2,7 @@ package network
 
 import (
 	"encoding/json"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mydocker/constant"
 	"net"
@@ -45,8 +46,10 @@ func (ipam *IPAM) Allocate(subnet *net.IPNet) (ip net.IP, err error) {
 		// size - one是子网掩码后面的网络位数，2^(size - one)表示网段中的可用IP数
 		// 而2^(size - one)等价于1 << uint8(size - one)
 		// 左移一位就是扩大两倍
-
-		(*ipam.Subnets)[subnet.String()] = strings.Repeat("0", 1<<uint8(size-one))
+		ipCount := 1 << uint8(size-one)
+		ipalloc := strings.Repeat("0", ipCount-2) // 减去 0和 255这俩个不可分配地址，所有可分配的 IP 地址
+		// 初始化分配配置，标记 .0 和 .255 位置为不可分配，直接置为 1
+		(*ipam.Subnets)[subnet.String()] = fmt.Sprintf("1%s1", ipalloc)
 	}
 	// 遍历网段的位图数组
 	for c := range (*ipam.Subnets)[subnet.String()] {
@@ -69,10 +72,12 @@ func (ipam *IPAM) Allocate(subnet *net.IPNet) (ip net.IP, err error) {
 			for t := uint(4); t > 0; t -= 1 {
 				[]byte(ip)[4-t] += uint8(c >> ((t - 1) * 8))
 			}
-			// ／由于此处IP是从1开始分配的（0被网关占了），所以最后再加1，最终得到分配的IP 172.17.0.20
-			ip[3] += 1
 			break
 		}
+	}
+
+	if ip == nil {
+		return nil, errors.New("no available ip in subnet")
 	}
 	// 最后调用dump将分配结果保存到文件中
 	err = ipam.dump()
@@ -93,7 +98,6 @@ func (ipam *IPAM) Release(subnet *net.IPNet, ipaddr *net.IP) error {
 	// 和分配一样的算法，反过来根据IP找到位图数组中的对应索引位置
 	c := 0
 	releaseIP := ipaddr.To4()
-	releaseIP[3] -= 1
 	for t := uint(4); t > 0; t -= 1 {
 		c += int(releaseIP[t-1]-subnet.IP[t-1]) << ((4 - t) * 8)
 	}
