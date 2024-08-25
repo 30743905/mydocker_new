@@ -67,6 +67,9 @@ func Run(tty bool, comArray, envSlice []string, res *resource.ResourceConfig, vo
 	// 在子进程创建后才能通过pipe来发送参数
 	sendInitCommand(comArray, writePipe)
 
+	if tty {
+		_ = parent.Wait() // 前台运行，等待容器进程结束
+	}
 	// 然后创建一个 goroutine 来处理后台运行的清理工作
 	go func() {
 		if !tty {
@@ -84,10 +87,6 @@ func Run(tty bool, comArray, envSlice []string, res *resource.ResourceConfig, vo
 		// 销毁 cgroup
 		cgroupManager.Destroy()
 	}()
-
-	if tty {
-		_ = parent.Wait() // 前台运行，等待容器进程结束
-	}
 }
 
 // sendInitCommand 通过writePipe将指令发送给子进程
