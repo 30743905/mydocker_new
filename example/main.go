@@ -1,3 +1,6 @@
+//go:build linux
+// +build linux
+
 package main
 
 import (
@@ -103,9 +106,9 @@ func urfaveCli() {
 	// 指定全局参数
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "lang, l",
-			Value: "english",
-			Usage: "Language for the greeting",
+			Name:  "lang, l",                   //参数名及其简写方式
+			Value: "english",                   //指定默认值
+			Usage: "Language for the greeting", //参数描述
 		},
 		cli.StringFlag{
 			Name:  "config, c",

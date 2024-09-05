@@ -1,8 +1,13 @@
+//go:build linux
+// +build linux
+
 package container
 
 import (
+	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 )
 
@@ -16,6 +21,7 @@ import (
 */
 func NewParentProcess(tty bool, command string) *exec.Cmd {
 	args := []string{"init", command} // 这里的 init 指令就用用来在子进程中调用 initCommand
+	log.Info("执行command内容为:", "/proc/self/exe", " ", strings.Join(args, " "))
 	cmd := exec.Command("/proc/self/exe", args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS |

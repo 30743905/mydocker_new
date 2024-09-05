@@ -1,7 +1,11 @@
+//go:build linux
+// +build linux
+
 package main
 
 import (
 	"os"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"mydocker/container"
@@ -15,9 +19,13 @@ import (
 */
 func Run(tty bool, cmd string) {
 	parent := container.NewParentProcess(tty, cmd)
+	log.Info("command开始执行")
 	if err := parent.Start(); err != nil {
 		log.Error(err)
 	}
+	log.Info("parent.Wait() begin-----------", os.Getpid())
 	_ = parent.Wait()
+	log.Info("parent.Wait() end-----------", os.Getpid())
+	time.Sleep(time.Second * 1)
 	os.Exit(-1)
 }

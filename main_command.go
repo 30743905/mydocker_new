@@ -1,7 +1,11 @@
+//go:build linux
+// +build linux
+
 package main
 
 import (
 	"fmt"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -19,17 +23,20 @@ var runCommand = cli.Command{
 		},
 	},
 	/*
-		这里是run命令执行的真正函数。
-		1.判断参数是否包含command
-		2.获取用户指定的command
-		3.调用Run function去准备启动容器:
+			这里是run命令执行的真正函数。
+			1.判断参数是否包含command
+			2.获取用户指定的command
+			3.调用Run function去准备启动容器:
+
+		main [global options] command [command options] [arguments...]
 	*/
 	Action: func(context *cli.Context) error {
+		log.Info("run args:", context.Args(), "-----", os.Getpid())
 		if len(context.Args()) < 1 {
 			return fmt.Errorf("missing container command")
 		}
-		cmd := context.Args().Get(0)
-		tty := context.Bool("it")
+		cmd := context.Args().Get(0) //取参数(arguments)
+		tty := context.Bool("it")    //取command options
 		Run(tty, cmd)
 		return nil
 	},
@@ -43,7 +50,8 @@ var initCommand = cli.Command{
 		2.执行容器初始化操作
 	*/
 	Action: func(context *cli.Context) error {
-		log.Infof("init come on")
+		log.Info("init come on", "-----", os.Getpid())
+		log.Info("init receive args:", context.Args())
 		cmd := context.Args().Get(0)
 		log.Infof("command: %s", cmd)
 		err := container.RunContainerInitProcess(cmd, nil)

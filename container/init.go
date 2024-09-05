@@ -1,10 +1,12 @@
+//go:build linux
+// +build linux
+
 package container
 
 import (
+	log "github.com/sirupsen/logrus"
 	"os"
 	"syscall"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // RunContainerInitProcess 启动容器的init进程
@@ -25,8 +27,11 @@ func RunContainerInitProcess(command string, args []string) error {
 	defaultMountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
 	_ = syscall.Mount("proc", "/proc", "proc", uintptr(defaultMountFlags), "")
 	argv := []string{command}
+	log.Info("syscall.Exec-------执行开始")
+	//syscall.Exec这里会阻塞，除非程序运行完成退出
 	if err := syscall.Exec(command, argv, os.Environ()); err != nil {
 		log.Errorf(err.Error())
 	}
+	log.Info("syscall.Exec-------执行完成")
 	return nil
 }
